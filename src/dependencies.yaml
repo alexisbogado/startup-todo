@@ -1,0 +1,49 @@
+services:
+  _defaults:
+    autowire: true
+    rootDir: './'
+
+  domain.shared.EventBus:
+    class: infrastructure/bus/InMemoryEventBus
+
+  application.eventHandler.CompletePhaseOnTaskDone:
+    class: application/eventHandler/CompletePhaseOnTaskDone
+    arguments: 
+      - '@domain.phase.PhaseRepository'
+      - '@domain.task.TaskRepository'
+      - '@domain.shared.EventBus'
+    tags:
+      - { name: domainEventSubscriber }
+
+  application.eventHandler.UnblockNextPhaseOnPhaseCompleted:
+    class: application/eventHandler/UnblockNextPhaseOnPhaseCompleted
+    arguments: 
+      - '@domain.phase.PhaseRepository'
+    tags:
+      - { name: domainEventSubscriber }
+
+  application.query.GetPhasesQueryHandler:
+    class: application/query/GetPhases
+    main: GetPhasesQueryHandler
+    arguments:
+      - '@domain.phase.PhaseRepository'
+
+  application.query.GetTasksByPhaseIdQueryHandler:
+    class: application/query/GetTasksByPhaseId
+    main: GetTasksByPhaseIdQueryHandler
+    arguments:
+      - '@domain.task.TaskRepository'
+
+  domain.phase.PhaseRepository:
+    class: infrastructure/persistence/InMemoryPhaseRepository
+
+  domain.task.TaskRepository:
+    class: infrastructure/persistence/InMemoryTaskRepository
+
+  application.command.CompleteTaskCommandHandler:
+    class: application/command/CompleteTask
+    main: CompleteTaskCommandHandler
+    arguments:
+      - '@domain.task.TaskRepository'
+      - '@domain.phase.PhaseRepository'
+      - '@domain.shared.EventBus'
